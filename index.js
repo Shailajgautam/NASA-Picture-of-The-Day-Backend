@@ -4,13 +4,16 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require("jsonwebtoken");
 const secret = 'RANDOM-TOKEN';
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const app = express();
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(cors())
+app.use(cors({ origin: true }));
+
 
 mongoose.connect('mongodb://localhost:27017/LoginDB', {
   useNewUrlParser: true,
@@ -18,6 +21,8 @@ mongoose.connect('mongodb://localhost:27017/LoginDB', {
 });
 
 const userSchema = new mongoose.Schema({
+
+  
   email: {
     type: String,
     required: [true, "Please provide an Email!"],
@@ -35,41 +40,38 @@ const userSchema = new mongoose.Schema({
 const User = new mongoose.model("User", userSchema)
 
 
-passport.use(
-  new GoogleStrategy(
-    {
-      // add your Google OAuth credentials here
-      clientID: '918874201442-7fspioengr7nicpr7fvquf16c18v6sst.apps.googleusercontent.com',
-      clientSecret: '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',
-      callbackURL: 'http://localhost:5000/auth/google/callback',
-    },
-    (accessToken, refreshToken, profile, done) => {
-      User.findOne({ googleId: profile.id }).then((currentUser) => {
-        if (currentUser) {
-          done(null, currentUser);
-        } else {
-          new User({
-            username: profile.displayName,
-            googleId: profile.id,
-          })
-            .save()
-            .then((newUser) => {
-              done(null, newUser);
-            });
-        }
-      });
-    }
-  )
-);
 
-//endpoint for google
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+passport.use(new GoogleStrategy({
+  clientID: '918874201442-7fspioengr7nicpr7fvquf16c18v6sst.apps.googleusercontent.com',
+  clientSecret: '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',
+  callbackURL: "http://localhost:5000/auth/google/callback",
+  passReqToCallback: true,
+},
+function(request, accessToken, refreshToken, profile, done) {
+  return done(null, { accessToken, profile });
+}));
 
-// Handle the callback after Google authentication
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/signup' }), function(req, res) {
-  // Successful authentication, redirect to index page
-  res.redirect('/');
-})
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function(user, done) {
+  done(null, user);
+});
+
+app.use(session({ secret: 'cats', resave: false, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get("/auth/google",
+  passport.authenticate('google', { scope: ['email', 'profile'] }));
+
+  app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), function(req, res) {
+
+    const token = jwt.sign({ email: req.user.email }, secret, { expiresIn: '1h' });
+  
+    res.cookie('Token', token, { httpOnly: true });
+  });
 
 // register endpoint
 app.post("/signup", async (req, res) => {
