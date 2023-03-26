@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
+
 const app = express();
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -73,35 +74,66 @@ app.get("/auth/google",
     res.cookie('Token', token, { httpOnly: true });
   });
 
+
+
+  app.post("/signup", async (req, res) => {
+    const { name, email, password } = req.body;
+    try {
+      const user = await User.findOne({ email });
+      if (user) {
+        res.send({ message: "User already registered" });
+      } else {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({
+          name,
+          email,
+          password: hashedPassword,
+        });
+        await newUser.save();
+        res.send({ message: "Successfully Registered, Please login now." });
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).send({ message: "Error registering user" });
+    }
+  });
+
+
+
+
+
+
 // register endpoint
-app.post("/signup", async (req, res) => {
-  try {
-    // hash the password
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+// app.post("/signup", async (req, res) => {
+//   try {
+//     // hash the password
+//     const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-    // create a new user instance and collect the data
-    const user = new User({
-      email: req.body.email,
-      password: hashedPassword,
-    });
+//     // create a new user instance and collect the data
+//     const user = new User({
+//       email: req.body.email,
+//       password: hashedPassword,
+//     });
 
-    // save the new user
-    const result = await user.save();
+//     // save the new user
+//     user.save();
 
-    res.status(201).send({
-      message: "User Created Successfully",
-      result,
-    });
-  } catch (error) {
-    res.status(500).send({
-      message: "Error creating user",
-      error,
-    });
-  }
-});
+//     res.status(201).send({
+//       message: "User Created Successfully",
+//       result,
+//     });
+//   } catch (error) {
+//     res.status(500).send({
+//       message: "Error creating user",
+//       error,
+//     });
+//   }
+// });
 
 
 
+
+const users = [];
 // login endpoint
 app.post("/login", (request, response) => {
   // check if email exists
