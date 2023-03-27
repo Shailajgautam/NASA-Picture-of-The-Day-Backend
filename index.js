@@ -7,6 +7,7 @@ const secret = 'RANDOM-TOKEN';
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
+const { default: verifyRoute } = require('./Routes/verify');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 
@@ -64,15 +65,22 @@ app.use(session({ secret: 'cats', resave: false, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get("/auth/google",
-  passport.authenticate('google', { scope: ['email', 'profile'] }));
+app.get("/auth/google",passport.authenticate('google', { scope: ['email profile'] }));
 
-  app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), function(req, res) {
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), function(req, res) {
+  const email = req.user.profile.emails[0].value
+    const token = jwt.sign(
+      {
+        userEmail: email,
+      },
+      "RANDOM-TOKEN",
+      { expiresIn: "24h" }
+    );
 
-    const token = jwt.sign({ email: req.user.email }, secret, { expiresIn: '1h' });
-  
-    res.cookie('Token', token, { httpOnly: true });
-  });
+    
+    res.redirect(`http://localhost:3000/?token=${token}&email=${email}`);
+
+});
 
 
 
@@ -198,16 +206,7 @@ app.post("/login", (request, response) => {
 });
 
 
-app.get('/verify', (req, res) => {
-  const token = req.headers.authorization.split(' ')[1];
-  jwt.verify(token, secret, (err, decoded) => {
-    if (err) {
-      res.status(401).send('Unauthorized');
-    } else {
-      res.status(200).send(decoded);
-    }
-  });
-});
+app.get('/verify', verifyRoute);
 
 
 
