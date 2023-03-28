@@ -30,7 +30,7 @@ mongoose.connect(process.env.MONGODB_URI
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: "http://localhost:5000/auth/google/callback",
+  callbackURL: `${process.env.BACKEND_URL}/auth/google/callback`,
   passReqToCallback: true,
 },
   function (request, accessToken, refreshToken, profile, done) {
@@ -65,7 +65,7 @@ app.get('/verify', verifyRoute);
 
 
 
-app.listen(5000, () => {
+app.listen(process.env.PORT, () => {
   console.log("BE started at port 5000")
 })
 

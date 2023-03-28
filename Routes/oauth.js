@@ -11,7 +11,7 @@ function oauth(req, res) {
       process.env.SECRET,
       { expiresIn: "24h" }
     );
-  res.redirect(`http://localhost:3000/?token=${token}&email=${email}`);
+  res.redirect(`${process.env.FRONTEND_URL}/?token=${token}&email=${email}`);
 
 }
  
