@@ -1,10 +1,10 @@
 
 const jwt = require("jsonwebtoken");
-const secret = 'RANDOM-TOKEN'
+require('dotenv').config();
 
 function verifyRoute(req, res) {
       const token = req.headers.authorization.split(' ')[1];
-      jwt.verify(token, secret, (err, decoded) => {
+      jwt.verify(token,process.env.SECRET, (err, decoded) => {
             if (err) {
                   res.status(401).send('Unauthorized');
 

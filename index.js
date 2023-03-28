@@ -18,7 +18,8 @@ app.use(cors({ origin: true }));
 
 
 //Connection to Database
-mongoose.connect('mongodb://localhost:27017/LoginDB', {
+mongoose.connect(process.env.MONGODB_URI
+  , {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });

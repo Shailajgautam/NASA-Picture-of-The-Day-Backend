@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/user")
 const jwt = require("jsonwebtoken");
+require('dotenv').config()
 
 // login endpoint
 function loginRoute(request, response) {
@@ -12,7 +13,7 @@ function loginRoute(request, response) {
       if (!user) {
         return response.status(404).send({
           success: false,
-          message: "Email not found",
+          message: "Email not found! please signup",
         });
       }
 
@@ -37,7 +38,7 @@ function loginRoute(request, response) {
               userId: user._id,
               userEmail: user.email,
             },
-            "RANDOM-TOKEN",
+            process.env.SECRET,
             { expiresIn: "24h" }
           );
 
