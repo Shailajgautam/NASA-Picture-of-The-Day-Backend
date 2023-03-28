@@ -53,7 +53,7 @@ app.use(passport.session());
 
 app.get("/auth/google", passport.authenticate('google', { scope: ['email profile'] }));
 
-app.get('process.env.BACKEND_URL/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), oauth)
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), oauth)
 
 
 
